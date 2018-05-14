@@ -35,10 +35,11 @@ import logging as log
 import os
 import sys
 
-from lsst.dax.dbserv import dbREST_v0
-from lsst.dax.imgserv import imageREST_v1 as is_api_v1
-from lsst.dax.metaserv import api_v0 as ms_api_v0, api_v1 as ms_api_v1
 from sqlalchemy import create_engine
+
+from lsst.dax.dbserv import dbREST_v0 as db_api_v0, dbREST_v1 as db_api_v1
+from lsst.dax.metaserv import metaREST_v1 as ms_api_v1
+from lsst.dax.imgserv import imageREST_v1 as is_api_v1
 
 try:
     from ConfigParser import RawConfigParser, NoSectionError
@@ -93,11 +94,11 @@ for key, value in webserv_config.items():
 def route_webserv_root():
     fmt = request.accept_mimetypes.best_match(['application/json', 'text/html'])
     if fmt == 'text/html':
-        return ("LSST Web Service here. I currently support: "
+        return ("Hello, LSST Web Service here. I currently support: "
                 "<a href='meta'>/meta</a>, "
                 "<a href='image'>/image</a>, "
-                "<a href='db'>/db</a.")
-    return "LSST Web Service here. I currently support: /meta, /image, /db."
+                "<a href='db'>/db</a>.")
+    return "Hello, LSST Web Service here. I currently support: /meta, /image, /db."
 
 
 @app.route('/db')
@@ -105,8 +106,9 @@ def route_dbserv():
     """Lists supported versions for /db."""
     fmt = request.accept_mimetypes.best_match(['application/json', 'text/html'])
     if fmt == 'text/html':
-        return "<a href='db/v0'>v0</a>"
-    return json.dumps("v0")
+        return ("<a href='db/v0/tap'>v0</a>, "
+                "<a href='db/v1'>v1</a>.")
+    return json.dumps("v0, v1")
 
 
 @app.route('/image')
@@ -115,7 +117,7 @@ def route_imgserv():
     fmt = request.accept_mimetypes.best_match(['application/json', 'text/html'])
     if fmt == 'text/html':
         return "<a href='image/v1'>v1</a>"
-    return json.dumps("['v1']")
+    return json.dumps("v1")
 
 
 @app.route('/meta')
@@ -123,13 +125,13 @@ def route_metaserv():
     """Lists supported versions for /meta."""
     fmt = request.accept_mimetypes.best_match(['application/json', 'text/html'])
     if fmt == 'text/html':
-        return "<a href='meta/v0'>v0</a>"
-    return json.dumps("v0")
+        return "<a href='meta/v1'>v1</a>"
+    return json.dumps("v1")
 
-app.register_blueprint(dbREST_v0.dbREST, url_prefix='/db/v0/tap')
+app.register_blueprint(db_api_v0.dbREST, url_prefix='/db/v0/tap')
+app.register_blueprint(db_api_v1.dbRESTv1, url_prefix='/db/v1')
 app.register_blueprint(is_api_v1.imageRESTv1, url_prefix='/image/v1')
-app.register_blueprint(ms_api_v0.metaREST, url_prefix='/meta/v0')
-app.register_blueprint(ms_api_v1.metaserv_api_v1, url_prefix='/meta/v1')
+app.register_blueprint(ms_api_v1.metaRESTv1, url_prefix='/meta/v1')
 
 if __name__ == '__main__':
     try:
